@@ -1,0 +1,34 @@
+year,origin,destination,commodity_code,commodity_name,value_usd,net_weight_kg,chokepoints,primary_distance_nm,alt_chokepoints,alt_distance_nm
+2023,China,India,85,Electrical machinery and electronics,30000000000,15000000000.0,['Strait of Malacca'],3500,['Sunda Strait'],4200.0
+2023,China,India,84,"Nuclear reactors, boilers, machinery",25000000000,12500000000.0,['Strait of Malacca'],3500,['Sunda Strait'],4200.0
+2023,China,India,39,Plastics and articles thereof,8000000000,4000000000.0,['Strait of Malacca'],3500,['Sunda Strait'],4200.0
+2023,Japan,India,84,"Nuclear reactors, boilers, machinery",5000000000,2500000000.0,['Strait of Malacca'],4500,['Sunda Strait'],5200.0
+2023,Japan,India,72,Iron and steel,4000000000,2000000000.0,['Strait of Malacca'],4500,['Sunda Strait'],5200.0
+2023,South Korea,India,85,Electrical machinery and electronics,6000000000,3000000000.0,['Strait of Malacca'],4300,['Sunda Strait'],5000.0
+2023,South Korea,India,72,Iron and steel,3500000000,1750000000.0,['Strait of Malacca'],4300,['Sunda Strait'],5000.0
+2023,Singapore,India,85,Electrical machinery and electronics,4000000000,2000000000.0,['Strait of Malacca'],1800,['Direct Sea'],1800.0
+2023,Saudi Arabia,India,27,"Mineral fuels and oils (Crude Oil, Coal, LNG)",28000000000,14000000000.0,['Strait of Hormuz'],1500,['None (Overland/Pipeline not viable)'],inf
+2023,Saudi Arabia,India,29,Organic chemicals,5000000000,2500000000.0,['Strait of Hormuz'],1500,['None (Overland/Pipeline not viable)'],inf
+2023,Iraq,India,27,"Mineral fuels and oils (Crude Oil, Coal, LNG)",26000000000,13000000000.0,['Strait of Hormuz'],1700,[],inf
+2023,UAE,India,27,"Mineral fuels and oils (Crude Oil, Coal, LNG)",15000000000,7500000000.0,['Strait of Hormuz'],1200,[],inf
+2023,UAE,India,71,"Natural or cultured pearls, precious stones",8000000000,4000000000.0,['Strait of Hormuz'],1200,[],inf
+2023,Qatar,India,27,"Mineral fuels and oils (Crude Oil, Coal, LNG)",12000000000,6000000000.0,['Strait of Hormuz'],1300,[],inf
+2023,Kuwait,India,27,"Mineral fuels and oils (Crude Oil, Coal, LNG)",8000000000,4000000000.0,['Strait of Hormuz'],1800,[],inf
+2023,Germany,India,84,"Nuclear reactors, boilers, machinery",6000000000,3000000000.0,"['Suez Canal', 'Bab-el-Mandeb']",5000,['Cape of Good Hope'],10500.0
+2023,Germany,India,30,Pharmaceutical products and medicines,3000000000,1500000000.0,"['Suez Canal', 'Bab-el-Mandeb']",5000,['Cape of Good Hope'],10500.0
+2023,Germany,India,90,"Optical, photographic, medical instruments",2500000000,1250000000.0,"['Suez Canal', 'Bab-el-Mandeb']",5000,['Cape of Good Hope'],10500.0
+2023,France,India,30,Pharmaceutical products and medicines,1500000000,750000000.0,"['Suez Canal', 'Bab-el-Mandeb']",4800,['Cape of Good Hope'],10300.0
+2023,France,India,84,"Nuclear reactors, boilers, machinery",2000000000,1000000000.0,"['Suez Canal', 'Bab-el-Mandeb']",4800,['Cape of Good Hope'],10300.0
+2023,UK,India,71,"Natural or cultured pearls, precious stones",4000000000,2000000000.0,"['Suez Canal', 'Bab-el-Mandeb']",5500,['Cape of Good Hope'],10800.0
+2023,UK,India,30,Pharmaceutical products and medicines,1000000000,500000000.0,"['Suez Canal', 'Bab-el-Mandeb']",5500,['Cape of Good Hope'],10800.0
+2023,USA,India,27,"Mineral fuels and oils (Crude Oil, Coal, LNG)",10000000000,5000000000.0,"['Suez Canal', 'Bab-el-Mandeb']",8500,['Cape of Good Hope'],11500.0
+2023,USA,India,84,"Nuclear reactors, boilers, machinery",8000000000,4000000000.0,"['Suez Canal', 'Bab-el-Mandeb']",8500,['Cape of Good Hope'],11500.0
+2023,USA,India,90,"Optical, photographic, medical instruments",4000000000,2000000000.0,"['Suez Canal', 'Bab-el-Mandeb']",8500,['Cape of Good Hope'],11500.0
+2023,Russia,India,27,"Mineral fuels and oils (Crude Oil, Coal, LNG)",45000000000,22500000000.0,"['Suez Canal', 'Bab-el-Mandeb']",4500,['Cape of Good Hope'],11000.0
+2023,Russia,India,31,Fertilizers,3000000000,1500000000.0,"['Suez Canal', 'Bab-el-Mandeb']",4500,['Cape of Good Hope'],11000.0
+2023,Brazil,India,15,Animal or vegetable fats and oils,2000000000,1000000000.0,['Cape of Good Hope'],7500,['Direct Sea'],7500.0
+2023,Australia,India,27,"Mineral fuels and oils (Crude Oil, Coal, LNG)",12000000000,6000000000.0,['Sunda Strait'],4500,['Lombok Strait'],4800.0
+2023,Australia,India,10,"Cereals (Wheat, Rice)",1500000000,750000000.0,['Sunda Strait'],4500,['Lombok Strait'],4800.0
+2023,Indonesia,India,27,"Mineral fuels and oils (Crude Oil, Coal, LNG)",10000000000,5000000000.0,['Strait of Malacca'],1500,['Direct Sea'],1600.0
+2023,Indonesia,India,15,Animal or vegetable fats and oils,5000000000,2500000000.0,['Strait of Malacca'],1500,['Direct Sea'],1600.0
+2023,South Africa,India,27,"Mineral fuels and oils (Crude Oil, Coal, LNG)",3000000000,1500000000.0,['Direct Sea'],4000,['Direct Sea'],4000.0
