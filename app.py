@@ -1,5 +1,6 @@
 from flask import Flask, jsonify
 from traffic import traffic_bp, db
+from layer_3 import layer_3_bp
 
 app = Flask(__name__)
 
@@ -12,8 +13,9 @@ db.init_app(app)
 with app.app_context():
     db.create_all()
 
-# Register Traffic blueprint
+# Register blueprints
 app.register_blueprint(traffic_bp)
+app.register_blueprint(layer_3_bp)
 
 # Data based on the provided JSON
 NODES_DATA = {
