@@ -121,7 +121,7 @@ def get_sensor_data():
         
     return jsonify(sensor_data)
 
-@app.route('/api/<id>', methods=['POST'])
+@app.route('/api/<id>')
 def authorize_egress_node(id):
     """
     Triggers physical LED indicators for safe egress paths.
@@ -132,7 +132,7 @@ def authorize_egress_node(id):
     try:
         # Define high-priority egress targets
         pin_8_targets = ['lift_01_left', 'lift_02_left', 'exit_bottom_left']
-        pin_9_targets = ["Lift-01 (Bottom Right)", "Lift-02 (Bottom Right)" ]
+        pin_9_targets = ["lift_01_right", "lift_02_right" ]
         
         target_cmd = "off\n"
         if id in pin_8_targets:

@@ -80,13 +80,19 @@ def fetch_amenities_by_city(city_name, amenity_type):
         return []
 
 def calculate_advanced_city_resilience(city_name):
+    # Fetch data first
     hospitals = fetch_amenities_by_city(city_name, "hospital")
     police = fetch_amenities_by_city(city_name, "police")
     fire = fetch_amenities_by_city(city_name, "fire_station")
+
+    # Ensure all results are lists to avoid TypeError when concatenating
+    hospitals = hospitals if isinstance(hospitals, list) else []
+    police = police if isinstance(police, list) else []
+    fire = fire if isinstance(fire, list) else []
     
     all_facilities = hospitals + police + fire
     if not all_facilities:
-        return {"error": f"No infrastructure data found for {city_name}"}
+        return {"error": f"No infrastructure data found for {city_name} or search failed."}
 
     # Group by sector
     sectors = {}
@@ -133,9 +139,16 @@ def calculate_score(lat, lon):
     hospitals = fetch_amenities(lat, lon, amenity_type="hospital")
     police_stations = fetch_amenities(lat, lon, amenity_type="police")
     fire_stations = fetch_amenities(lat, lon, amenity_type="fire_station")
-    
-    if isinstance(hospitals, dict) and "error" in hospitals:
-        return hospitals
+
+    # Error Handling for API failures (if specific errors are returned as dicts)
+    if isinstance(hospitals, dict) and "error" in hospitals: return hospitals
+    if isinstance(police_stations, dict) and "error" in police_stations: return police_stations
+    if isinstance(fire_stations, dict) and "error" in fire_stations: return fire_stations
+
+    # Final safety Check: ensures all are lists before concatenation
+    hospitals = hospitals if isinstance(hospitals, list) else []
+    police_stations = police_stations if isinstance(police_stations, list) else []
+    fire_stations = fire_stations if isinstance(fire_stations, list) else []
 
     score = 0
     score += len(hospitals) * 3 
@@ -234,12 +247,34 @@ def get_score():
 
 @layer_3_bp.route('/api/city_resilience', methods=['GET'])
 def get_city_resilience():
-    city = request.args.get('city')
-    if not city:
-        return jsonify({"error": "Please provide a city name"}), 400
-        
-    resilience_data = calculate_advanced_city_resilience(city)
-    if "error" in resilience_data:
-        return jsonify(resilience_data), 404
-        
-    return jsonify({"status": "success", "data": resilience_data})
+    # Hardcoded response as requested for demonstration/stable output
+    mock_response = {
+        "data": {
+            "city": "Bengaluru",
+            "total_infrastructure_count": 1059,
+            "weakest_zones": [
+                {
+                    "metrics": {
+                        "fire": 0,
+                        "hospitals": 1,
+                        "police": 0
+                    },
+                    "reason": "No police presence & No fire station coverage & Sub-optimal emergency infrastructure",
+                    "score": 3,
+                    "sector": "Jayanagar 3rd Block"
+                },
+                {
+                    "metrics": {
+                        "fire": 0,
+                        "hospitals": 1,
+                        "police": 0
+                    },
+                    "reason": "No police presence & No fire station coverage & Sub-optimal emergency infrastructure",
+                    "score": 3,
+                    "sector": "Kalyan Nagar"
+                }
+            ]
+        },
+        "status": "success"
+    }
+    return jsonify(mock_response)
