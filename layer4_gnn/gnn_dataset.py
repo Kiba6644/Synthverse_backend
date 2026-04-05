@@ -78,13 +78,30 @@ def load_base_graph_state():
         # Prevent zero capacity
         if v['capacity'] == 0: v['capacity'] = avg_vol * 0.5
             
-    return list(nodes), edge_dict
+    # Additional metadata for India-centric reporting
+    trade_flows = {}
+    for _, row in df.iterrows():
+        origin = row['origin']
+        chokepoints = eval(row['chokepoints']) if isinstance(row['chokepoints'], str) else []
+        alt_chokepoints = eval(row['alt_chokepoints']) if isinstance(row['alt_chokepoints'], str) else []
+        
+        if origin not in trade_flows:
+            trade_flows[origin] = {
+                'primary_path': [origin] + chokepoints + ['India'],
+                'alt_path': [origin] + [cp for cp in alt_chokepoints if 'None' not in cp] + ['India'],
+                'primary_dist': float(row['primary_distance_nm']),
+                'alt_dist': float(row['alt_distance_nm']) if not np.isinf(float(row['alt_distance_nm'])) else 20000,
+                'commodity': row['commodity_name'],
+                'value': float(row['value_usd'])
+            }
+
+    return list(nodes), edge_dict, trade_flows
 
 def generate_synthetic_scenarios(num_scenarios=500):
     """
     Generates synthetic graph layouts representing different disruption scenarios.
     """
-    nodes_list, base_edges = load_base_graph_state()
+    nodes_list, base_edges, trade_flows = load_base_graph_state()
     node_to_idx = {n: i for i, n in enumerate(nodes_list)}
     num_nodes = len(nodes_list)
     

@@ -1,9 +1,13 @@
 from flask import Flask, jsonify
+from flask_cors import CORS
+
 from traffic import traffic_bp, db
 from layer_3 import layer_3_bp
 from layer_4_api import layer_4_bp
 
 app = Flask(__name__)
+CORS(app)
+
 
 # Database Setup
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///hackathon.db'
