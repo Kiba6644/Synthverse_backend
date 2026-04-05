@@ -102,18 +102,20 @@ def get_pending_user_events():
     } for e in events]
     return jsonify({"status": "success", "route_type": "pending_events", "data": event_list})
 
-@traffic_bp.route("/api/user_events/<int:id>/approve", methods=["POST"])
-def approve_user_event(id):
+@traffic_bp.route("/api/user_events/<int:id>/status", methods=["POST"])
+def update_user_event_status(id):
     """
-    Marks a new event as accepted.
+    Updates the status of a user event (approved/rejected).
     """
     event = UserEvent.query.get(id)
     if not event: 
         return jsonify({"error": "Event not found"}), 404
         
     req_data = request.get_json(silent=True) or {}
-    if req_data.get("status") == "approved":
-        event.status = "approved"
+    new_status = req_data.get("status")
+    
+    if new_status in ["approved", "rejected"]:
+        event.status = new_status
         db.session.commit()
-        return jsonify({"status": "success", "message": "Event approved"}), 200
-    return jsonify({"error": "Invalid status payload"}), 400
+        return jsonify({"status": "success", "message": f"Event {new_status}"}), 200
+    return jsonify({"error": "Invalid status payload. Use 'approved' or 'rejected'."}), 400

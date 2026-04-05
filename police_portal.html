@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Police Event Approval Portal | Strategic Traffic Control</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #050505;
+            --panel-bg: rgba(20, 20, 20, 0.7);
+            --accent-blue: #3b82f6;
+            --accent-red: #ef4444;
+            --accent-orange: #f59e0b;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: #eee;
+            overflow: hidden;
+            margin: 0;
+            height: 100vh;
+        }
+
+        .glass-panel {
+            background: var(--panel-bg);
+            backdrop-filter: blur(40px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 99px;
+            font-size: 0.65rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .event-card {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .event-card:hover {
+            transform: scale(1.02);
+            border-color: rgba(59, 130, 146, 0.4);
+            box-shadow: 0 0 30px rgba(59, 130, 246, 0.1);
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        .severity-glow-low { box-shadow: 0 0 15px rgba(59, 130, 246, 0.1); }
+        .severity-glow-mid { box-shadow: 0 0 20px rgba(245, 158, 11, 0.15); }
+        .severity-glow-high { box-shadow: 0 0 25px rgba(239, 68, 68, 0.2); }
+
+        .btn-authorize {
+            background: linear-gradient(135deg, #1d4ed8, #3b82f6);
+            box-shadow: 0 0 20px rgba(37, 99, 235, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .btn-authorize:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 30px rgba(37, 99, 235, 0.6);
+        }
+
+        .btn-dismiss {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .btn-dismiss:hover {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: var(--accent-red);
+            color: var(--accent-red);
+        }
+    </style>
+</head>
+<body class="flex flex-col">
+
+    <!-- Header -->
+    <header class="h-24 px-12 glass-panel border-b border-white/5 flex items-center justify-between z-10">
+        <div class="flex items-center gap-6">
+            <div class="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center shadow-[0_0_30px_rgba(37,99,235,0.5)]">
+                <i data-lucide="shield-check" class="text-white w-7 h-7"></i>
+            </div>
+            <div>
+                <h1 class="text-2xl font-black text-white tracking-tighter leading-none mb-1 text-blue-500 uppercase italic">Control <span class="text-white">Portal</span></h1>
+                <p class="text-[0.6rem] text-gray-500 font-bold uppercase tracking-[0.4em]">Event Review & Traffic Authorization Matrix</p>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-8">
+            <div class="flex items-center gap-3">
+                <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                <p id="live-pings" class="text-[0.7rem] font-black text-gray-400 uppercase">Live Queue: Synchronized</p>
+            </div>
+            <button onclick="fetchPendingEvents()" class="p-3 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-all">
+                <i data-lucide="rotate-cw" class="w-5 h-5 text-gray-400"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="flex-1 flex overflow-hidden p-12 gap-12">
+        
+        <!-- Sidebar Statistics -->
+        <aside class="w-80 space-y-8 h-full shrink-0">
+            <div class="glass-panel p-8 rounded-[2rem] border-t border-white/10">
+                <p class="text-[0.65rem] font-bold text-gray-500 uppercase tracking-widest mb-4">Pending Authorizations</p>
+                <p id="pending-count" class="text-4xl font-black text-white italic">0</p>
+                <div class="h-px bg-white/5 my-6"></div>
+                <p class="text-xs text-gray-400 leading-relaxed italic">Review incoming event vectors to evaluate traffic severity. Authorization results are broadcast to the civil protection layer automatically.</p>
+            </div>
+        </aside>
+
+        <!-- Event Grid -->
+        <section class="flex-1 overflow-y-auto custom-scrollbar pr-6">
+            <div id="event-grid" class="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                <!-- Event cards will be injected here -->
+            </div>
+
+            <div id="empty-state" class="hidden py-40 text-center glass-panel rounded-[2rem] border-dashed border-white/10">
+                <i data-lucide="inbox" class="w-16 h-16 mx-auto mb-6 opacity-10 text-blue-400"></i>
+                <p class="text-sm font-bold text-gray-600 uppercase tracking-widest">No pending authorizations in tactical queue</p>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        const API_BASE = 'http://127.0.0.1:5000/api';
+
+        async function fetchPendingEvents() {
+            try {
+                const response = await axios.get(`${API_BASE}/user_events`);
+                const events = response.data.data;
+                renderEvents(events);
+            } catch (error) {
+                console.error("Failed to fetch events:", error);
+            }
+        }
+
+        function renderEvents(events) {
+            const grid = document.getElementById('event-grid');
+            const empty = document.getElementById('empty-state');
+            const count = document.getElementById('pending-count');
+            
+            grid.innerHTML = '';
+            count.innerText = events.length;
+
+            if (events.length === 0) {
+                empty.classList.remove('hidden');
+                return;
+            } else {
+                empty.classList.add('hidden');
+            }
+
+            events.forEach(event => {
+                const severityClass = event.traffic_score > 70 ? 'severity-glow-high' : (event.traffic_score > 40 ? 'severity-glow-mid' : 'severity-glow-low');
+                const scoreColor = event.traffic_score > 70 ? 'text-red-500' : (event.traffic_score > 40 ? 'text-orange-500' : 'text-blue-500');
+                
+                const card = document.createElement('div');
+                card.className = `event-card glass-panel p-8 rounded-[2rem] border border-white/5 relative flex flex-col ${severityClass}`;
+                
+                card.innerHTML = `
+                    <div class="flex justify-between items-start mb-6">
+                        <div class="space-y-1">
+                            <h3 class="text-lg font-black text-white italic tracking-tighter uppercase font-medium">AUTHORIZATION ID: #${event.id}</h3>
+                            <p class="text-xs text-gray-500 font-bold uppercase tracking-widest">${event.event_name}</p>
+                        </div>
+                        <div class="flex flex-col items-end">
+                            <span class="status-badge bg-blue-500/10 text-blue-400 mb-2">Pending Authorization</span>
+                            <p class="text-[0.6rem] text-gray-500 font-bold uppercase">${event.created_at}</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-8 mb-8 border-t border-b border-white/5 py-8">
+                        <div>
+                            <p class="text-[0.55rem] text-gray-600 uppercase font-black mb-2 tracking-widest">Tactical Location</p>
+                            <p class="text-sm font-bold text-gray-200 uppercase">${event.location}</p>
+                        </div>
+                        <div>
+                            <p class="text-[0.55rem] text-gray-600 uppercase font-black mb-2 tracking-widest">Expected Crowd</p>
+                            <p class="text-sm font-bold text-gray-200 lowercase">${event.expected_crowd} units</p>
+                        </div>
+                        <div>
+                            <p class="text-[0.55rem] text-gray-600 uppercase font-black mb-2 tracking-widest">Operational Date</p>
+                            <p class="text-sm font-bold text-gray-200">${event.date}</p>
+                        </div>
+                        <div>
+                            <p class="text-[0.55rem] text-gray-600 uppercase font-black mb-2 tracking-widest">Traffic Impact</p>
+                            <p class="text-xl font-black ${scoreColor}">${event.traffic_score}/100</p>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-4 mt-auto">
+                        <button onclick="updateStatus(${event.id}, 'approved')" class="btn-authorize flex-1 py-4 rounded-2xl text-[0.7rem] font-black text-white uppercase tracking-widest">
+                            Authorize Entry
+                        </button>
+                        <button onclick="updateStatus(${event.id}, 'rejected')" class="btn-dismiss flex-1 py-4 rounded-2xl text-[0.7rem] font-black text-gray-400 uppercase tracking-widest">
+                            Dismiss Sector
+                        </button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        async function updateStatus(id, status) {
+            try {
+                const url = `${API_BASE}/user_events/${id}/status`;
+                await axios.post(url, { status: status });
+                fetchPendingEvents(); // Refresh queue
+            } catch (error) {
+                console.error(`Failed to update event ${id}:`, error);
+                alert("STATION ERROR: ACTION AUTHORIZATION FAILED.");
+            }
+        }
+
+        // Initialize
+        window.onload = () => {
+            fetchPendingEvents();
+            setInterval(fetchPendingEvents, 10000); // Polling every 10s
+        };
+        lucide.createIcons();
+    </script>
+</body>
+</html>

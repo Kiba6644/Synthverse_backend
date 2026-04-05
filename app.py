@@ -8,13 +8,9 @@ from layer_4_api import layer_4_bp
 app = Flask(__name__)
 CORS(app)
 
-
-# Database Setup
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///hackathon.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
-
-# Create tables before first request or explicitly
 with app.app_context():
     db.create_all()
 
@@ -57,8 +53,33 @@ NODES_DATA = {
 
 import random
 
+import serial
+import time
+import atexit
+
+# Serial Configuration
+SERIAL_PORT = 'COM10'
+BAUD_RATE = 9600
+ser = None
+
+def cleanup():
+    global ser
+    if ser and ser.is_open:
+        print(f"Releasing {SERIAL_PORT}...")
+        ser.close()
+
+# Register the cleanup handler
+atexit.register(cleanup)
+
+try:
+    ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=2)
+    time.sleep(2) # Wait for Arduino to reset
+    print(f"CONNECTED TO CONTROL MATRIX ON {SERIAL_PORT}")
+except Exception as e:
+    print(f"CRITICAL: Failed to link with {SERIAL_PORT}. {e}")
+
 @app.route('/api/nodes', methods=['GET'])
-def get_all_nodes():
+def get_all_nodes():    
     return jsonify({
         "exits": NODES_DATA["exits"] + NODES_DATA["lifts"],
         "hallway": NODES_DATA["hallway_nodes"]
@@ -71,33 +92,64 @@ def get_sensor_data():
         "exits": []
     }
     
-    # Generate random scores for hallway nodes (0 to 100)
+    # 1. Fetch Real-time data from Arduino for the specific junction node
+    arduino_value = 10 # Default baseline
+    if ser and ser.is_open:
+        try:
+            ser.write(b"dat\n")
+            line = ser.readline().decode('utf-8').strip()
+            if line:
+                arduino_value = int(float(line))
+        except Exception as e:
+            print(f"Serial Error: {e}")
+
     for node in NODES_DATA["hallway_nodes"]:
+        score = 31
+        if node["id"] == "node_bottom_left_corner":
+            score = arduino_value
+            
         sensor_data["hallway"].append({
             "id": node["id"],
-            "score": random.randint(0, 100)
+            "score": score
         })
         
-    # Generate random scores for exits/lifts
-    all_exits = NODES_DATA["exits"] + NODES_DATA["lifts"]
-    for node in all_exits:
+    for node in NODES_DATA["exits"] + NODES_DATA["lifts"]:
         sensor_data["exits"].append({
             "id": node["id"],
-            "score": random.randint(0, 100)
+            "score": 31
         })
         
-    # Ensure at least one exit is "open" (score < 100)
-    # If all happen to be 100, force one to be 0
-    all_exits_blocked = all(exit_node["score"] == 100 for exit_node in sensor_data["exits"])
-    if all_exits_blocked and len(sensor_data["exits"]) > 0:
-        sensor_data["exits"][0]["score"] = 0
-        
-    # Actually, to make it more realistic and ensure it works out well, let's explicitly pick one
-    # exit/lift to be guaranteed < 100 (e.g., 0-50).
-    guaranteed_open_idx = random.randint(0, len(sensor_data["exits"]) - 1)
-    sensor_data["exits"][guaranteed_open_idx]["score"] = random.randint(0, 50)
-    
     return jsonify(sensor_data)
 
+@app.route('/api/<id>', methods=['POST'])
+def authorize_egress_node(id):
+    """
+    Triggers physical LED indicators for safe egress paths.
+    """
+    if not ser or not ser.is_open:
+        return jsonify({"error": "No physical link to control matrix available."}), 503
+        
+    try:
+        # Define high-priority egress targets
+        pin_8_targets = ['lift_01_left', 'lift_02_left', 'exit_bottom_left']
+        pin_9_targets = ['exit_top_center']
+        
+        target_cmd = "off\n"
+        if id in pin_8_targets:
+            target_cmd = "cmd_8\n"
+        elif id in pin_9_targets:
+            target_cmd = "cmd_9\n"
+            
+        ser.write(target_cmd.encode())
+        response = ser.readline().decode('utf-8').strip()
+        
+        return jsonify({
+            "status": "success",
+            "authorized_id": id,
+            "physical_signal": response
+        }), 200
+    except Exception as e:
+        return jsonify({"error": f"Authorization signal interrupt: {e}"}), 500
+
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=5000, host="0.0.0.0", use_reloader=False)
