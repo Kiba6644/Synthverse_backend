@@ -132,7 +132,7 @@ def authorize_egress_node(id):
     try:
         # Define high-priority egress targets
         pin_8_targets = ['lift_01_left', 'lift_02_left', 'exit_bottom_left']
-        pin_9_targets = ['exit_top_center']
+        pin_9_targets = ["Lift-01 (Bottom Right)", "Lift-02 (Bottom Right)" ]
         
         target_cmd = "off\n"
         if id in pin_8_targets:
