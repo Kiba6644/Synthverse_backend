@@ -93,7 +93,7 @@ def get_sensor_data():
     }
     
     # 1. Fetch Real-time data from Arduino for the specific junction node
-    arduino_value = 10 # Default baseline
+    arduino_value = 50 # Default baseline
     if ser and ser.is_open:
         try:
             ser.write(b"dat\n")

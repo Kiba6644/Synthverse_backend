@@ -50,6 +50,85 @@ def fetch_amenities(lat, lon, radius=10000, max_results=50, amenity_type="hospit
     except Exception as e:
         return {"error": str(e)}
 
+def fetch_amenities_by_city(city_name, amenity_type):
+    base_url = "https://overpass-api.de/api/interpreter"
+    query = f"""
+    [out:json];
+    area[name="{city_name}"]->.searchArea;
+    (
+      node["amenity"="{amenity_type}"](area.searchArea);
+      way["amenity"="{amenity_type}"](area.searchArea);
+      relation["amenity"="{amenity_type}"](area.searchArea);
+    );
+    out center;
+    """
+    try:
+        response = requests.get(base_url, params={"data": query})
+        if response.status_code != 200:
+            return []
+        data = response.json()
+        facilities = []
+        for element in data.get("elements", []):
+            name = element.get("tags", {}).get("name", "Unnamed")
+            sector_id = element.get("tags", {}).get("addr:suburb") or element.get("tags", {}).get("addr:neighbourhood", "Unknown")
+            lat = element.get("lat") or (element.get("center", {}).get("lat"))
+            lon = element.get("lon") or (element.get("center", {}).get("lon"))
+            if lat and lon:
+                facilities.append({"name": name, "lat": lat, "lon": lon, "sector_id": sector_id, "type": amenity_type})
+        return facilities
+    except Exception:
+        return []
+
+def calculate_advanced_city_resilience(city_name):
+    hospitals = fetch_amenities_by_city(city_name, "hospital")
+    police = fetch_amenities_by_city(city_name, "police")
+    fire = fetch_amenities_by_city(city_name, "fire_station")
+    
+    all_facilities = hospitals + police + fire
+    if not all_facilities:
+        return {"error": f"No infrastructure data found for {city_name}"}
+
+    # Group by sector
+    sectors = {}
+    for f in all_facilities:
+        s_id = f['sector_id']
+        if s_id == "Unknown": continue
+        if s_id not in sectors:
+            sectors[s_id] = {"h": 0, "p": 0, "f": 0, "facilities": []}
+        
+        if f['type'] == "hospital": sectors[s_id]["h"] += 1
+        elif f['type'] == "police": sectors[s_id]["p"] += 1
+        elif f['type'] == "fire_station": sectors[s_id]["f"] += 1
+        sectors[s_id]["facilities"].append(f)
+
+    # Score each sector (Lower is weaker)
+    analysis = []
+    for s_id, counts in sectors.items():
+        score = (counts["h"] * 3) + (counts["p"] * 2) + (counts["f"] * 1)
+        
+        # Build reason
+        reasons = []
+        if counts["h"] == 0: reasons.append("Zero healthcare facilities")
+        if counts["p"] == 0: reasons.append("No police presence")
+        if counts["f"] == 0: reasons.append("No fire station coverage")
+        if score < 5 and score > 0: reasons.append("Sub-optimal emergency infrastructure")
+        
+        analysis.append({
+            "sector": s_id,
+            "score": score,
+            "metrics": {"hospitals": counts["h"], "police": counts["p"], "fire": counts["f"]},
+            "reason": " & ".join(reasons) if reasons else "General infrastructure deficit"
+        })
+
+    # Get Top 3 Weakest (Ascending score)
+    top_3_weakest = sorted(analysis, key=lambda x: x['score'])[:3]
+    
+    return {
+        "city": city_name,
+        "total_infrastructure_count": len(all_facilities),
+        "weakest_zones": top_3_weakest
+    }
+
 def calculate_score(lat, lon):
     hospitals = fetch_amenities(lat, lon, amenity_type="hospital")
     police_stations = fetch_amenities(lat, lon, amenity_type="police")
@@ -152,3 +231,15 @@ def get_score():
         return jsonify(score_data), 500
         
     return jsonify({"status": "success", "data": score_data})
+
+@layer_3_bp.route('/api/city_resilience', methods=['GET'])
+def get_city_resilience():
+    city = request.args.get('city')
+    if not city:
+        return jsonify({"error": "Please provide a city name"}), 400
+        
+    resilience_data = calculate_advanced_city_resilience(city)
+    if "error" in resilience_data:
+        return jsonify(resilience_data), 404
+        
+    return jsonify({"status": "success", "data": resilience_data})
